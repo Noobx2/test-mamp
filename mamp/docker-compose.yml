@@ -1,0 +1,71 @@
+version: '3.8'
+
+networks:
+  dev:
+
+services:
+  apache:
+    build:
+      context: ./apache
+      dockerfile: apache.dockerfile
+    hostname: 'apache.container'
+    container_name: 'apache'
+    volumes: 
+      - ./www:/var/www/html/
+    environment: 
+      - PROJECT_DIR=/var/www/html
+    ports: 
+      - 89:89
+    depends_on:
+      - php_fpm
+    networks:
+      - dev
+
+  php_fpm:
+    build:
+      context: ./php
+      dockerfile: php.dockerfile
+    hostname: 'fpm.container'
+    container_name: 'fpm'
+    volumes: 
+      - ./www:/var/www/html/
+    links: 
+      - db
+    ports:
+      - 9000:9000
+    networks:
+      - dev 
+
+  db:
+    image: mariadb:10.6
+    restart: always
+    ports:
+      - "3307:3306"
+    volumes:
+           - db-data:/var/lib/mysql 
+    environment:
+       MYSQL_DATABASE: db
+       MYSQL_USER: dev23
+       MYSQL_PASSWORD: test
+       MYSQL_ROOT_PASSWORD: test
+       TZ: Europe/Madrid
+    networks:
+      - dev
+
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    links:
+      - db:db
+    ports:
+      - 8080:80
+    environment:
+      - PMA_ARBITRARY=1
+    networks:
+      - dev
+
+volumes:
+    db-data:
+  
+
+
